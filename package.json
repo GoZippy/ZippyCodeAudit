@@ -10,7 +10,12 @@
   "scripts": {
     "start": "node src/cli/index.js",
     "dev": "nodemon src/cli/index.js",
-    "build": "echo 'No build step required for CLI tool'",
+    "build": "npm run build:cli && npm run build:dashboard",
+    "build:cli": "echo 'CLI tool ready for distribution'",
+    "build:dashboard": "npm run build:dashboard:static",
+    "build:dashboard:static": "node scripts/build-dashboard.js",
+    "serve:dashboard": "npx serve src/dashboard -p 3001",
+    "dev:dashboard": "npm run build:dashboard:static && npm run serve:dashboard",
     "test": "jest",
     "lint": "eslint src/",
     "format": "prettier --write src/",

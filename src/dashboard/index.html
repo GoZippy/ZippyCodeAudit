@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧩 ZippyCodeAudit Dashboard</title>
+    <meta name="description" content="Lightweight audit dashboard for vibe coders">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="public/manifest.json">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="public/favicon.svg">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#007acc">
+    <meta name="color-scheme" content="light dark">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🧩</span>
+                    <h1>ZippyCodeAudit</h1>
+                </div>
+                <nav class="nav">
+                    <button class="nav-button" data-page="overview">Overview</button>
+                    <button class="nav-button" data-page="reports">Reports</button>
+                    <button class="nav-button" data-page="tasks">Tasks</button>
+                    <button class="nav-button" data-page="analytics">Analytics</button>
+                    <button class="nav-button" data-page="settings">Settings</button>
+                </nav>
+                <div class="header-actions">
+                    <button class="action-button" id="refreshBtn" title="Refresh Data">
+                        <span class="icon">🔄</span>
+                    </button>
+                    <button class="action-button" id="exportBtn" title="Export Data">
+                        <span class="icon">📥</span>
+                    </button>
+                    <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                        <span class="icon">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="spinner"></div>
+                <p>Loading audit data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="error-state hidden" id="errorState">
+                <div class="error-icon">⚠️</div>
+                <h3>Unable to Load Data</h3>
+                <p>Check your connection and try refreshing the page.</p>
+                <button class="retry-btn" onclick="location.reload()">Retry</button>
+            </div>
+
+            <!-- Overview Page -->
+            <div class="page" id="overviewPage">
+                <div class="page-header">
+                    <h2>Project Overview</h2>
+                    <p class="page-subtitle">Current audit status and key metrics</p>
+                </div>
+
+                <!-- Metrics Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">📊</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalFiles">-</div>
+                            <div class="metric-label">Files Analyzed</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="totalIssues">-</div>
+                            <div class="metric-label">Issues Found</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="projectHealth">-</div>
+                            <div class="metric-label">Health Score</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">✅</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="completedTasks">-</div>
+                            <div class="metric-label">Tasks Done</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-list" id="recentActivity">
+                        <div class="activity-item">
+                            <div class="activity-icon">🔍</div>
+                            <div class="activity-content">
+                                <div class="activity-title">Audit Completed</div>
+                                <div class="activity-time">2 hours ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Page -->
+            <div class="page hidden" id="reportsPage">
+                <div class="page-header">
+                    <h2>Audit Reports</h2>
+                    <p class="page-subtitle">Historical audit data and trends</p>
+                </div>
+
+                <div class="reports-grid" id="reportsGrid">
+                    <!-- Reports will be populated here -->
+                </div>
+            </div>
+
+            <!-- Tasks Page -->
+            <div class="page hidden" id="tasksPage">
+                <div class="page-header">
+                    <h2>Task Management</h2>
+                    <p class="page-subtitle">Track and manage audit findings</p>
+                </div>
+
+                <div class="tasks-container">
+                    <div class="tasks-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="pending">Pending</button>
+                        <button class="filter-btn" data-filter="in-progress">In Progress</button>
+                        <button class="filter-btn" data-filter="completed">Completed</button>
+                    </div>
+
+                    <div class="tasks-list" id="tasksList">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div class="page hidden" id="analyticsPage">
+                <div class="page-header">
+                    <h2>Analytics & Insights</h2>
+                    <p class="page-subtitle">Deep dive into your codebase metrics</p>
+                </div>
+
+                <div class="analytics-grid">
+                    <!-- Charts and insights will be populated here -->
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div class="page hidden" id="settingsPage">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                    <p class="page-subtitle">Configure your audit preferences</p>
+                </div>
+
+                <div class="settings-sections">
+                    <div class="settings-section">
+                        <h3>Analysis Settings</h3>
+                        <div class="setting-item">
+                            <label>Auto-refresh interval</label>
+                            <select id="refreshInterval">
+                                <option value="30000">30 seconds</option>
+                                <option value="60000">1 minute</option>
+                                <option value="300000">5 minutes</option>
+                                <option value="0">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Theme preference</label>
+                            <select id="themePreference">
+                                <option value="auto">Auto</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; 2025 ZippyCodeAudit. Built for vibe coders.</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#" onclick="showAbout()">About</a>
+                    <a href="#" onclick="showPrivacy()">Privacy</a>
+                    <a href="#" onclick="showHelp()">Help</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="utils/storage.js"></script>
+    <script src="utils/api.js"></script>
+    <script src="utils/charts.js"></script>
+    <script src="components/metrics-card.js"></script>
+    <script src="components/activity-item.js"></script>
+    <script src="components/task-item.js"></script>
+    <script src="components/report-card.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Service Worker for PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>
