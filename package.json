@@ -15,7 +15,7 @@
     "build:dashboard": "npm run build:dashboard:static",
     "build:dashboard:static": "node scripts/build-dashboard.js",
     "build:vscode": "cd extensions/vscode && npm run compile",
-    "serve:dashboard": "npx serve src/dashboard -p 3001",
+    "serve:dashboard": "node -e \"const config=require('./.zippycodesaudit-ports.json'); console.log(config?.ports?.dashboard?.port || 3001);\" | xargs npx serve src/dashboard -p",
     "dev:dashboard": "npm run build:dashboard:static && npm run serve:dashboard",
     "dev:vscode": "cd extensions/vscode && npm run watch",
     "package:vscode": "cd extensions/vscode && npm run vscode:prepublish",
