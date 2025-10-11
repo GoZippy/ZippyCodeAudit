@@ -44,19 +44,42 @@ ZippyCodeAudit is an open-source project auditing system that combines AI-powere
 
 ### Quick Start (Recommended)
 
+#### Option 1: Install CLI Tool Globally
 ```bash
 # Clone the repository
 git clone https://github.com/GoZippy/ZippyCodeAudit.git
 cd ZippyCodeAudit
 
-# Run the setup script
-./scripts/setup.sh
+# Install CLI tool globally (Linux/macOS)
+./scripts/install-cli.sh
 
-# Or use npm for Node.js projects
-npm install -g zippycodesaudit
+# Or install CLI tool globally (Windows PowerShell)
+.\scripts\install-cli.ps1
 
-# Or use pip for Python projects
-pip install zippycodesaudit
+# Verify installation
+zippy-audit --version
+```
+
+#### Option 2: Manual Installation
+```bash
+# Install dependencies
+npm install
+
+# Link globally (Linux/macOS)
+npm link
+
+# Or install globally (Windows)
+npm install -g .
+```
+
+#### Option 3: Use as Library
+```javascript
+// In your Node.js project
+npm install zippycodesaudit
+
+const { AuditEngine } = require('zippycodesaudit');
+const audit = new AuditEngine();
+const results = await audit.runAudit();
 ```
 
 ### Manual Installation
@@ -66,48 +89,80 @@ pip install zippycodesaudit
 
 ## 🎮 Usage
 
-### Quick Audit
+### Quick Start
 
 ```bash
-# CLI audit of current project
-zippy-audit
+# Initialize audit system in your project
+zippy-audit init
 
-# Web dashboard
-zippy-audit web
+# Run comprehensive analysis
+zippy-audit analyze
 
-# VS Code integration
-# Install extension and use Command Palette
+# Check for specific issues
+zippy-audit check --security --performance
+
+# Generate detailed report
+zippy-audit report --format html --output audit-report.html
+
+# Configure settings
+zippy-audit config --set analysis.maxDepth=15
 ```
+
+### Available Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `analyze` | Comprehensive project analysis | `zippy-audit analyze --format json` |
+| `check` | Run specific quality checks | `zippy-audit check --all` |
+| `report` | Generate audit reports | `zippy-audit report --type detailed` |
+| `init` | Initialize audit system | `zippy-audit init --audit-system` |
+| `config` | Manage configuration | `zippy-audit config --show` |
+
+### Output Formats
+
+- **JSON**: Machine-readable data for integrations
+- **Markdown**: Human-readable reports with formatting
+- **HTML**: Web-viewable reports with styling
+- **Table**: Console-friendly tabular display
 
 ### GitHub Integration
 
-1. Copy audit files to your repository:
+1. **Copy audit files to your repository:**
    ```bash
-   cp -r audit-system/* your-project/
+   cp -r docs/PROJECT_AUDIT_PROMPT.md your-project/docs/
+   cp -r docs/PROJECT_AUDIT_TASKS.md your-project/docs/
+   cp -r docs/PROJECT_AUDIT_RUNBOOK.md your-project/docs/
    ```
 
-2. Configure GitHub Secrets (optional for AI features):
+2. **Configure GitHub Secrets (optional for AI features):**
    - `AI_AUDIT_ENDPOINT`
    - `AI_AUDIT_API_KEY`
 
-3. Enable GitHub Actions workflow for automated auditing
+3. **Enable GitHub Actions workflow for automated auditing**
+
+### VS Code Integration
+
+1. Install the ZippyCodeAudit VS Code extension
+2. Use Command Palette: "ZippyCodeAudit: Analyze Project"
+3. Configure settings in `.vscode/settings.json`
 
 ### Custom Integration
 
 ```javascript
-import { ZippyCodeAudit } from 'zippycodesaudit';
+const { AuditEngine } = require('zippycodesaudit');
 
-const audit = new ZippyCodeAudit({
+const audit = new AuditEngine({
   projectPath: './my-project',
-  config: {
-    includePatterns: ['src/**/*', 'docs/**/*'],
-    excludePatterns: ['node_modules/**', 'dist/**'],
-    customRules: [...]
-  }
+  includePatterns: ['src/**/*', 'docs/**/*'],
+  excludePatterns: ['node_modules/**', 'dist/**']
 });
 
-const results = await audit.analyze();
+const results = await audit.runAudit();
 console.log(results.report);
+
+// Access specific data
+console.log(`Found ${results.issues.length} issues`);
+console.log(`Analyzed ${results.files.length} files`);
 ```
 
 ## 🏗️ Architecture
