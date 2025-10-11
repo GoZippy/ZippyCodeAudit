@@ -1,0 +1,89 @@
+{
+  "name": "zippycodesaudit",
+  "version": "1.0.0",
+  "description": "Comprehensive code auditing toolkit for vibe coders",
+  "main": "src/cli/index.js",
+  "bin": {
+    "zippy-audit": "src/cli/index.js",
+    "zca": "src/cli/index.js"
+  },
+  "scripts": {
+    "start": "node src/cli/index.js",
+    "dev": "nodemon src/cli/index.js",
+    "build": "echo 'No build step required for CLI tool'",
+    "test": "jest",
+    "lint": "eslint src/",
+    "format": "prettier --write src/",
+    "prepublishOnly": "npm run test && npm run lint"
+  },
+  "keywords": [
+    "code-audit",
+    "static-analysis",
+    "quality-assurance",
+    "developer-tools",
+    "productivity",
+    "ai-powered",
+    "zippy",
+    "vibe-coding"
+  ],
+  "author": "ZippyCodeAudit Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoZippy/ZippyCodeAudit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GoZippy/ZippyCodeAudit/issues"
+  },
+  "homepage": "https://github.com/GoZippy/ZippyCodeAudit#readme",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "inquirer": "^9.2.0",
+    "fs-extra": "^11.2.0",
+    "glob": "^10.3.0",
+    "js-yaml": "^4.1.0",
+    "marked": "^9.0.0",
+    "simple-git": "^3.20.0",
+    "ora": "^7.0.0",
+    "boxen": "^5.1.0",
+    "table": "^6.8.0",
+    "lodash": "^4.17.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.0",
+    "nodemon": "^3.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ]
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2022": true
+    },
+    "extends": ["eslint:recommended"],
+    "rules": {
+      "no-console": "off",
+      "no-unused-vars": "warn"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2
+  }
+}
