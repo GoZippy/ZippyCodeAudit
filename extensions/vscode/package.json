@@ -1,0 +1,164 @@
+{
+  "name": "zippycodesaudit-vscode",
+  "displayName": "ZippyCodeAudit",
+  "description": "Integrated code auditing toolkit for VS Code",
+  "version": "1.0.0",
+  "publisher": "GoZippy",
+  "icon": "resources/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "audit",
+    "code quality",
+    "analysis",
+    "productivity",
+    "zippy",
+    "vibe coding"
+  ],
+  "activationEvents": [
+    "onCommand:zippy-audit.analyze",
+    "onCommand:zippy-audit.check",
+    "onCommand:zippy-audit.report",
+    "onCommand:zippy-audit.init",
+    "onView:zippyAuditView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "zippy-audit.analyze",
+        "title": "ZippyCodeAudit: Analyze Project",
+        "category": "ZippyCodeAudit"
+      },
+      {
+        "command": "zippy-audit.check",
+        "title": "ZippyCodeAudit: Run Quality Checks",
+        "category": "ZippyCodeAudit"
+      },
+      {
+        "command": "zippy-audit.report",
+        "title": "ZippyCodeAudit: Generate Report",
+        "category": "ZippyCodeAudit"
+      },
+      {
+        "command": "zippy-audit.init",
+        "title": "ZippyCodeAudit: Initialize Project",
+        "category": "ZippyCodeAudit"
+      },
+      {
+        "command": "zippy-audit.openDashboard",
+        "title": "ZippyCodeAudit: Open Dashboard",
+        "category": "ZippyCodeAudit"
+      },
+      {
+        "command": "zippy-audit.settings",
+        "title": "ZippyCodeAudit: Open Settings",
+        "category": "ZippyCodeAudit"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "zippy-audit.analyze",
+          "when": "resourceExtname == .js || resourceExtname == .ts || resourceExtname == .py || resourceExtname == .go || resourceExtname == .md",
+          "group": "zippy-audit"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "zippy-audit.analyze",
+          "when": "editorTextFocus && (resourceExtname == .js || resourceExtname == .ts || resourceExtname == .py || resourceExtname == .go || resourceExtname == .md)",
+          "group": "zippy-audit"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "zippyAuditView",
+          "name": "ZippyCodeAudit",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "zippyAuditView",
+        "contents": "Welcome to ZippyCodeAudit!\n\nGet started by running your first audit:\n[Analyze Project](command:zippy-audit.analyze)\n\nOr initialize audit system:\n[Initialize](command:zippy-audit.init)"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "ZippyCodeAudit",
+      "properties": {
+        "zippycodesaudit.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable ZippyCodeAudit extension"
+        },
+        "zippycodesaudit.autoCheck": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically run checks on file save"
+        },
+        "zippycodesaudit.reportFormat": {
+          "type": "string",
+          "default": "markdown",
+          "enum": ["json", "markdown", "html", "table"],
+          "description": "Default report output format"
+        },
+        "zippycodesaudit.apiTier": {
+          "type": "string",
+          "default": "public",
+          "enum": ["public", "premium", "private"],
+          "description": "API tier to use for analysis"
+        },
+        "zippycodesaudit.apiEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Custom API endpoint for ZippyMCP services"
+        },
+        "zippycodesaudit.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for premium/private tier access"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.47.0",
+    "typescript": "^5.1.6",
+    "@vscode/test-electron": "^2.3.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoZippy/ZippyCodeAudit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GoZippy/ZippyCodeAudit/issues"
+  },
+  "homepage": "https://github.com/GoZippy/ZippyCodeAudit#readme"
+}
