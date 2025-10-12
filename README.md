@@ -85,7 +85,7 @@ const results = await audit.runAudit();
 ### Manual Installation
 
 1. **Prerequisites**: Node.js 16+, Python 3.8+, or .NET 6+
-2. **Clone and setup**: See detailed guides in [`docs/guides/`](docs/guides/)
+2. **Clone and setup**: See detailed guides in [`docs/guides/setup.md`](docs/guides/setup.md)
 
 ## 🎮 Usage
 
@@ -213,6 +213,9 @@ npm run dev
 ## 📚 Documentation
 
 - **[User Guide](docs/guides/user-guide.md)**: Complete usage instructions
+- **[Setup Guide](docs/guides/setup.md)**: Installation and configuration
+- **[Web Dashboard Guide](docs/guides/web-dashboard.md)**: Dashboard usage
+- **[VS Code Extension Guide](docs/guides/vscode-extension.md)**: Extension documentation
 - **[API Reference](docs/api/)**: Technical API documentation
 - **[Examples](docs/examples/)**: Code samples and tutorials
 - **[Contributing](CONTRIBUTING.md)**: Guidelines for contributors

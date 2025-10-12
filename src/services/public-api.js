@@ -13,7 +13,7 @@ const router = express.Router();
 // Security middleware
 router.use(helmet());
 router.use(cors({
-  origin: ['https://zippycodesaudit.com', 'http://localhost:3001'],
+  origin: ['https://your-domain.com', 'http://localhost:3001'],
   credentials: true
 }));
 

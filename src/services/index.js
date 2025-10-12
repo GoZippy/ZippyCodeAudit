@@ -67,7 +67,7 @@ function createApp(config = {}) {
     origin: function (origin, callback) {
       // Allow requests from configured origins
       const allowedOrigins = config.allowedOrigins || [
-        'https://zippycodesaudit.com',
+        'https://your-domain.com',
         'http://localhost:3001',
         'https://localhost:3001'
       ];
