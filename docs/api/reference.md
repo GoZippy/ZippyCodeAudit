@@ -8,9 +8,9 @@ Complete API documentation for all ZippyMCP service tiers and client integration
 
 | Tier | Base URL | Description |
 |------|----------|-------------|
-| **Public** | `https://api.zippycodesaudit.com/public` | Free tier with rate limits |
-| **Premium** | `https://api.zippycodesaudit.com/premium` | Paid tier with enhanced features |
-| **Private** | `https://api.zippycodesaudit.com/private` | Enterprise tier with advanced capabilities |
+| **Public** | `https://your-domain.com/api/public` | Free tier with rate limits |
+| **Premium** | `https://your-domain.com/api/premium` | Paid tier with enhanced features |
+| **Private** | `https://your-domain.com/api/private` | Enterprise tier with advanced capabilities |
 
 ## 🔐 Authentication
 
@@ -419,9 +419,9 @@ class ZippyCodeAuditClient {
 
   getBaseURL(tier) {
     const urls = {
-      public: 'https://api.zippycodesaudit.com/public',
-      premium: 'https://api.zippycodesaudit.com/premium',
-      private: 'https://api.zippycodesaudit.com/private'
+      public: 'https://your-domain.com/api/public',
+      premium: 'https://your-domain.com/api/premium',
+      private: 'https://your-domain.com/api/private'
     };
     return urls[tier];
   }
@@ -472,9 +472,9 @@ class ZippyCodeAuditClient:
 
     def _get_base_url(self, tier):
         urls = {
-            'public': 'https://api.zippycodesaudit.com/public',
-            'premium': 'https://api.zippycodesaudit.com/premium',
-            'private': 'https://api.zippycodesaudit.com/private'
+            'public': 'https://your-domain.com/api/public',
+            'premium': 'https://your-domain.com/api/premium',
+            'private': 'https://your-domain.com/api/private'
         }
         return urls[tier]
 
@@ -532,7 +532,7 @@ analysis = client.analyze_code('your_python_code', 'python')
 ### Setup Webhook
 
 ```bash
-curl -X POST https://api.zippycodesaudit.com/webhooks \
+curl -X POST https://your-domain.com/api/webhooks \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -554,7 +554,7 @@ curl -X POST https://api.zippycodesaudit.com/webhooks \
     "status": "completed",
     "score": 85,
     "issuesCount": 3,
-    "reportUrl": "https://dashboard.zippycodesaudit.com/reports/analysis-123"
+    "reportUrl": "https://your-domain.com/reports/analysis-123"
   }
 }
 ```
@@ -570,7 +570,7 @@ curl -X POST https://api.zippycodesaudit.com/webhooks \
     "message": "Failed to analyze code",
     "details": "Code too large for current tier",
     "retryAfter": 3600,
-    "support": "https://support.zippycodesaudit.com"
+    "support": "https://your-domain.com/support"
   },
   "timestamp": "2025-01-11T10:30:00Z"
 }
@@ -614,10 +614,10 @@ curl -X POST https://api.zippycodesaudit.com/webhooks \
 
 ### Getting Help
 
-- **Documentation**: [docs.zippycodesaudit.com](https://docs.zippycodesaudit.com)
+- **Documentation**: [docs.your-domain.com](https://your-domain.com/docs)
 - **Community**: [Discord](https://discord.gg/zippy)
-- **Support**: [support@zippycodesaudit.com](mailto:support@zippycodesaudit.com)
-- **Enterprise**: [enterprise@zippycodesaudit.com](mailto:enterprise@zippycodesaudit.com)
+- **Support**: [support@your-domain.com](mailto:support@your-domain.com)
+- **Enterprise**: [enterprise@your-domain.com](mailto:enterprise@your-domain.com)
 
 ### Response Times
 

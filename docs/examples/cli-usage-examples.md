@@ -75,7 +75,7 @@ zippy-audit init --audit-system --ci-workflow --vscode-extension
 zippy-audit config --set analysis.maxDepth=15
 
 # Configure API endpoint for premium features
-zippy-audit config --set api.endpoint=https://api.zippycodesaudit.com/premium
+zippy-audit config --set api.endpoint=https://your-domain.com/api/premium
 zippy-audit config --set api.key=your-premium-api-key
 
 # Set default output format
