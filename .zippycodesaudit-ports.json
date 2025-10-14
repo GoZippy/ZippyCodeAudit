@@ -1,0 +1,36 @@
+{
+  "generatedAt": "2025-10-12T02:12:13.954Z",
+  "platform": "win32",
+  "ports": {
+    "dashboard": {
+      "port": 3001,
+      "url": "http://localhost:3001",
+      "description": "Web dashboard for audit management"
+    },
+    "api": {
+      "port": 3006,
+      "url": "http://localhost:3006/api",
+      "description": "API services for audit functionality"
+    },
+    "monitoring": {
+      "port": 3002,
+      "url": "http://localhost:3002",
+      "description": "Monitoring and health checks"
+    }
+  },
+  "scanResults": {
+    "available": {
+      "API Services": 3006
+    },
+    "conflicts": {
+      "api": {
+        "port": 3000,
+        "process": "TCP    0.0.0.0:3000           0.0.0.0:0              LISTENING       703572\r\n  TCP    [::]:3000              [::]:0                 LISTENING       703572\r\n  TCP    [::1]:3000             [::]:0                 LISTENING       854588",
+        "recommended": 3006
+      }
+    },
+    "recommendations": {
+      "API Services": "Kill conflicting process or use alternative port"
+    }
+  }
+}

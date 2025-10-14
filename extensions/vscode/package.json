@@ -22,13 +22,6 @@
     "zippy",
     "vibe coding"
   ],
-  "activationEvents": [
-    "onCommand:zippy-audit.analyze",
-    "onCommand:zippy-audit.check",
-    "onCommand:zippy-audit.report",
-    "onCommand:zippy-audit.init",
-    "onView:zippyAuditView"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

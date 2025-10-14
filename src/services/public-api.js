@@ -376,4 +376,270 @@ router.get('/info', (req, res) => {
   });
 });
 
+/**
+ * Project detection endpoint
+ */
+router.post('/projects/detect', async (req, res) => {
+  try {
+    const { projectPath } = req.body;
+
+    if (!projectPath) {
+      return res.status(400).json({ error: 'projectPath is required' });
+    }
+
+    const ProjectDetector = require('../core/ProjectDetector');
+    const detector = new ProjectDetector(projectPath);
+    const results = await detector.detect();
+
+    res.json({
+      success: true,
+      detection: results,
+      summary: detector.getSummary()
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Add project endpoint
+ */
+router.post('/projects/add', async (req, res) => {
+  try {
+    const { projectPath, metadata } = req.body;
+
+    if (!projectPath) {
+      return res.status(400).json({ error: 'projectPath is required' });
+    }
+
+    const ProjectRegistry = require('../core/ProjectRegistry');
+    const registry = new ProjectRegistry();
+    await registry.initialize();
+
+    const project = await registry.registerProject(projectPath, metadata);
+
+    res.json({
+      success: true,
+      project
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * List projects endpoint
+ */
+router.get('/projects', async (req, res) => {
+  try {
+    const ProjectRegistry = require('../core/ProjectRegistry');
+    const registry = new ProjectRegistry();
+    await registry.initialize();
+
+    const projects = registry.listProjects();
+
+    res.json({
+      success: true,
+      projects
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get project endpoint
+ */
+router.get('/projects/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ProjectRegistry = require('../core/ProjectRegistry');
+    const registry = new ProjectRegistry();
+    await registry.initialize();
+
+    const project = registry.getProject(id);
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    res.json({
+      success: true,
+      project
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Remove project endpoint
+ */
+router.delete('/projects/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const ProjectRegistry = require('../core/ProjectRegistry');
+    const registry = new ProjectRegistry();
+    await registry.initialize();
+
+    await registry.unregisterProject(id);
+
+    res.json({
+      success: true,
+      message: 'Project removed successfully'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Run progressive audit endpoint
+ */
+router.post('/projects/:id/audit/progressive', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { testSuite = 'standard' } = req.body;
+
+    const ProjectRegistry = require('../core/ProjectRegistry');
+    const registry = new ProjectRegistry();
+    await registry.initialize();
+
+    const project = registry.getProject(id);
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const AuditEngine = require('../core/AuditEngine');
+    const engine = new AuditEngine({ projectPath: project.path });
+
+    // Send SSE headers for progress updates
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const results = await engine.runProgressiveAudit(testSuite, (progress) => {
+      res.write(`data: ${JSON.stringify(progress)}\n\n`);
+    });
+
+    res.write(`data: ${JSON.stringify({ phase: 'complete', results })}\n\n`);
+    res.end();
+  } catch (error) {
+    res.write(`data: ${JSON.stringify({ phase: 'error', error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
+/**
+ * Get test suite builder endpoint
+ */
+router.post('/projects/test-suite', async (req, res) => {
+  try {
+    const { detection } = req.body;
+
+    if (!detection) {
+      return res.status(400).json({ error: 'detection results required' });
+    }
+
+    const TestSuiteBuilder = require('../core/TestSuiteBuilder');
+    const builder = new TestSuiteBuilder(detection);
+
+    const availableTests = builder.buildAvailableTests();
+    const presets = builder.getPresets();
+    const recommendations = builder.getRecommendations();
+
+    res.json({
+      success: true,
+      availableTests,
+      presets,
+      recommendations
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get AI assistant recommendation endpoint
+ */
+router.post('/assistant/recommend', async (req, res) => {
+  try {
+    const { detection, mode = 'vibe' } = req.body;
+
+    if (!detection) {
+      return res.status(400).json({ error: 'detection results required' });
+    }
+
+    const AuditAssistant = require('../core/AuditAssistant');
+    const assistant = new AuditAssistant(detection, mode);
+
+    const welcome = assistant.getWelcomeMessage();
+    
+    const TestSuiteBuilder = require('../core/TestSuiteBuilder');
+    const builder = new TestSuiteBuilder(detection);
+    const auditRecommendation = assistant.getAuditRecommendation(builder);
+
+    res.json({
+      success: true,
+      welcome,
+      recommendation: auditRecommendation
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Import from ZIP endpoint
+ */
+router.post('/projects/import/zip', async (req, res) => {
+  try {
+    const { zipPath, projectName } = req.body;
+
+    if (!zipPath) {
+      return res.status(400).json({ error: 'zipPath is required' });
+    }
+
+    const ZipImporter = require('../services/zip-importer');
+    const importer = new ZipImporter();
+
+    const result = await importer.importZip(zipPath, projectName);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Clone from GitHub endpoint
+ */
+router.post('/projects/import/github', async (req, res) => {
+  try {
+    const { repoUrl, accessToken, options = {} } = req.body;
+
+    if (!repoUrl) {
+      return res.status(400).json({ error: 'repoUrl is required' });
+    }
+
+    const GitHubIntegration = require('../services/github-integration');
+    const github = new GitHubIntegration(accessToken);
+
+    const result = await github.cloneRepository(repoUrl, options);
+
+    res.json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

@@ -7,6 +7,7 @@ const path = require('path');
 const chalk = require('chalk');
 const ora = require('ora');
 const { formatOutput } = require('../utils/formatters');
+const { glob } = require('glob');
 
 const CHECKS = {
   security: {
@@ -335,6 +336,7 @@ async function runTestCoverageCheck(options) {
 async function runDependenciesCheck(options) {
   const issues = [];
   const projectPath = process.cwd();
+  let deps = [];
 
   // Check package.json for outdated patterns
   const packagePath = path.join(projectPath, 'package.json');
@@ -342,7 +344,7 @@ async function runDependenciesCheck(options) {
     const packageJson = await fs.readJson(packagePath);
 
     if (packageJson.dependencies) {
-      const deps = Object.keys(packageJson.dependencies);
+      deps = Object.keys(packageJson.dependencies);
       if (deps.length > 50) {
         issues.push({
           type: 'dependencies',

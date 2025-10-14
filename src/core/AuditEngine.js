@@ -82,11 +82,92 @@ class AuditEngine {
 
       this.hideSpinner();
 
+      // Save to history
+      try {
+        const HistoryTracker = require('./HistoryTracker');
+        const tracker = new HistoryTracker(this.options.projectPath);
+        await tracker.saveAudit(this.results);
+      } catch (historyError) {
+        console.warn('Failed to save audit history:', historyError.message);
+      }
+
       return this.results;
     } catch (error) {
       this.hideSpinner();
       throw error;
     }
+  }
+
+  /**
+   * Run progressive audit with phases
+   * Phase 1: Quick Parse, Phase 2: Smart Prompt, Phase 3: Progressive Execution, Phase 4: Results
+   */
+  async runProgressiveAudit(testSuite = 'standard', onProgress = null) {
+    try {
+      // Phase 1: Quick Parse (5-10 seconds)
+      if (onProgress) onProgress({ phase: 1, stage: 'scanning', progress: 0, message: 'Starting quick parse...' });
+      
+      const quickProfile = await this.quickParse(onProgress);
+      
+      if (onProgress) onProgress({ phase: 1, stage: 'complete', progress: 20, message: 'Quick parse complete', data: quickProfile });
+
+      // Phase 2: Smart Prompt (handled by caller typically)
+      // This is where the UI would show test options to the user
+      
+      // Phase 3: Progressive Execution
+      if (onProgress) onProgress({ phase: 3, stage: 'security', progress: 30, message: 'Running security checks...' });
+      
+      await this.initialize();
+      
+      if (onProgress) onProgress({ phase: 3, stage: 'analyzing', progress: 40, message: 'Analyzing codebase...' });
+      await this.analyzeFiles();
+      
+      if (onProgress) onProgress({ phase: 3, stage: 'quality', progress: 60, message: 'Checking code quality...' });
+      await this.runQualityChecks();
+      
+      if (onProgress) onProgress({ phase: 3, stage: 'linting', progress: 80, message: 'Running linters...' });
+      await this.generateRecommendations();
+      
+      // Phase 4: Results & Recommendations
+      if (onProgress) onProgress({ phase: 4, stage: 'complete', progress: 100, message: 'Audit complete!', data: this.results });
+      
+      // Save to history
+      try {
+        const HistoryTracker = require('./HistoryTracker');
+        const tracker = new HistoryTracker(this.options.projectPath);
+        await tracker.saveAudit(this.results);
+      } catch (historyError) {
+        console.warn('Failed to save audit history:', historyError.message);
+      }
+
+      return this.results;
+    } catch (error) {
+      if (onProgress) onProgress({ phase: 'error', error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Quick parse for initial project profile
+   */
+  async quickParse(onProgress = null) {
+    const ProjectDetector = require('./ProjectDetector');
+    const detector = new ProjectDetector(this.options.projectPath);
+    
+    if (onProgress) onProgress({ phase: 1, stage: 'detecting', progress: 5, message: 'Detecting project type...' });
+    
+    const detection = await detector.detect();
+    
+    if (onProgress) onProgress({ phase: 1, stage: 'counting', progress: 15, message: 'Counting files and languages...' });
+    
+    return {
+      projectType: detection.projectType,
+      languages: detection.languages,
+      frameworks: detection.frameworks,
+      fileCount: detection.fileCount,
+      complexity: detection.complexity,
+      summary: detector.getSummary()
+    };
   }
 
   /**

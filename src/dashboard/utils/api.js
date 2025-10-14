@@ -3,9 +3,9 @@
  * Handles data fetching, caching, and error management
  */
 
-// API Configuration
+// API Configuration - Browser compatible
 const API_CONFIG = {
-  BASE_URL: process.env.ZIPPY_MCP_API_URL || 'http://localhost:3000/api',
+  BASE_URL: 'http://localhost:3006/api', // Use the audit API port
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
@@ -261,7 +261,7 @@ class MockAPIClient {
 function createAPIClient(config = {}) {
   // Check if ZippyMCP is available/configured
   const useZippyMCP = config.useZippyMCP !== false &&
-    (process.env.ZIPPY_MCP_API_URL || localStorage.getItem('zippyMcpEndpoint'));
+    (localStorage.getItem('zippyMcpEndpoint') || API_CONFIG.BASE_URL);
 
   if (useZippyMCP) {
     return new ZippyMCPClient(config);

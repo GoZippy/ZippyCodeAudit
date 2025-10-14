@@ -127,7 +127,7 @@ async function analyzeProject() {
   } catch (error) {
     console.error('Analysis failed:', error);
     auditStatusBarItem.text = '$(error) Analysis Failed';
-    vscode.window.showErrorMessage(`Analysis failed: ${error.message}`);
+    vscode.window.showErrorMessage(`Analysis failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   // Hide status bar after delay
@@ -168,7 +168,7 @@ async function runQualityChecks() {
 
   } catch (error) {
     console.error('Quality check failed:', error);
-    vscode.window.showErrorMessage(`Quality check failed: ${error.message}`);
+    vscode.window.showErrorMessage(`Quality check failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -197,7 +197,7 @@ async function generateReport() {
 
   } catch (error) {
     console.error('Report generation failed:', error);
-    vscode.window.showErrorMessage(`Report generation failed: ${error.message}`);
+    vscode.window.showErrorMessage(`Report generation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -229,7 +229,7 @@ async function initializeProject() {
 
   } catch (error) {
     console.error('Initialization failed:', error);
-    vscode.window.showErrorMessage(`Initialization failed: ${error.message}`);
+    vscode.window.showErrorMessage(`Initialization failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -252,7 +252,12 @@ function openSettings() {
  * Prepare project data for analysis
  */
 async function prepareProjectData(projectPath: string) {
-  const projectData = {
+  const projectData: {
+    path: string;
+    name: string;
+    files: any[];
+    packageInfo: any;
+  } = {
     path: projectPath,
     name: path.basename(projectPath),
     files: [],
@@ -655,7 +660,7 @@ class AuditTreeDataProvider implements vscode.TreeDataProvider<AuditTreeItem> {
     if (!element) {
       // Root level - show main sections
       return Promise.resolve([
-        new AuditTreeItem('Quick Actions', vscode.TreeItemCollapsibleState.Expanded, 'actions'),
+        new AuditTreeItem('Quick Actions', vscode.TreeItemCollapsibleState.Expanded, 'actions', 'zippy-audit.analyze'),
         new AuditTreeItem('Recent Reports', vscode.TreeItemCollapsibleState.Collapsed, 'reports'),
         new AuditTreeItem('Current Issues', vscode.TreeItemCollapsibleState.Collapsed, 'issues')
       ]);
@@ -689,16 +694,16 @@ class AuditTreeItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly context: string,
-    public readonly command?: string
+    public readonly commandId?: string
   ) {
     super(label, collapsibleState);
 
     this.tooltip = this.getTooltip();
     this.iconPath = this.getIcon();
 
-    if (command) {
+    if (commandId) {
       this.command = {
-        command,
+        command: commandId,
         title: label,
         arguments: []
       };

@@ -7,8 +7,23 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { minify } = require('html-minifier-terser');
-const CleanCSS = require('clean-css');
+
+// Optional dependencies for minification
+let minify, CleanCSS;
+try {
+  const htmlMinifier = require('html-minifier-terser');
+  minify = htmlMinifier.minify;
+} catch (error) {
+  console.warn('⚠️  html-minifier-terser not available, skipping HTML minification');
+  minify = null;
+}
+
+try {
+  CleanCSS = require('clean-css');
+} catch (error) {
+  console.warn('⚠️  clean-css not available, skipping CSS minification');
+  CleanCSS = null;
+}
 
 const BUILD_DIR = 'dist/dashboard';
 const SOURCE_DIR = 'src/dashboard';
@@ -18,8 +33,7 @@ async function buildDashboard() {
 
   try {
     // Clean build directory
-    await fs.remove(BUILD_DIR);
-    await fs.ensureDir(BUILD_DIR);
+    await fs.emptyDir(BUILD_DIR);
 
     // Copy static assets
     await copyStaticAssets();
@@ -62,6 +76,12 @@ async function copyStaticAssets() {
       await fs.copy(srcPath, `${BUILD_DIR}/${asset}`);
     }
   }
+
+  // Copy service worker if exists
+  const swPath = `${SOURCE_DIR}/sw.js`;
+  if (await fs.pathExists(swPath)) {
+    await fs.copy(swPath, `${BUILD_DIR}/sw.js`);
+  }
 }
 
 async function processHTML() {
@@ -79,15 +99,19 @@ async function processHTML() {
 
   // Basic HTML minification for production
   const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) {
-    html = await minify(html, {
-      removeComments: true,
-      collapseWhitespace: true,
-      minifyCSS: true,
-      minifyJS: true,
-      removeEmptyAttributes: true,
-      removeRedundantAttributes: true
-    });
+  if (isProduction && minify) {
+    try {
+      html = await minify(html, {
+        removeComments: true,
+        collapseWhitespace: true,
+        minifyCSS: true,
+        minifyJS: true,
+        removeEmptyAttributes: true,
+        removeRedundantAttributes: true
+      });
+    } catch (error) {
+      console.warn('⚠️  HTML minification failed, using unminified HTML:', error.message);
+    }
   }
 
   await fs.writeFile(outputPath, html);
@@ -108,57 +132,60 @@ async function processCSS() {
 
   // Minify CSS for production
   const isProduction = process.env.NODE_ENV === 'production';
-  if (isProduction) {
-    const cleanCSS = new CleanCSS({
-      level: 2,
-      inline: false
-    });
+  if (isProduction && CleanCSS) {
+    try {
+      const cleanCSS = new CleanCSS({
+        level: 2,
+        inline: false
+      });
 
-    const result = cleanCSS.minify(css);
-    if (result.errors.length > 0) {
-      console.warn('⚠️  CSS minification warnings:', result.errors);
+      const result = cleanCSS.minify(css);
+      if (result.errors.length > 0) {
+        console.warn('⚠️  CSS minification warnings:', result.errors);
+      }
+
+      css = result.styles;
+    } catch (error) {
+      console.warn('⚠️  CSS minification failed, using unminified CSS:', error.message);
     }
-
-    await fs.writeFile(outputPath, result.styles);
-  } else {
-    await fs.writeFile(outputPath, css);
   }
+
+  await fs.writeFile(outputPath, css);
 }
 
 async function processJavaScript() {
   console.log('⚡ Processing JavaScript...');
 
-  const jsFiles = [
-    'app.js',
-    'utils/storage.js',
-    'utils/api.js',
-    'components/metrics-card.js',
-    'components/activity-item.js',
-    'components/task-item.js',
-    'components/report-card.js'
-  ];
+  // Process main app file
+  const appJsPath = `${SOURCE_DIR}/app.js`;
+  const appOutputPath = `${BUILD_DIR}/app.js`;
 
-  for (const jsFile of jsFiles) {
-    const srcPath = `${SOURCE_DIR}/${jsFile}`;
-    const outputPath = `${BUILD_DIR}/${jsFile}`;
+  if (await fs.pathExists(appJsPath)) {
+    let js = await fs.readFile(appJsPath, 'utf8');
 
-    if (await fs.pathExists(srcPath)) {
-      let js = await fs.readFile(srcPath, 'utf8');
-
-      // Basic JS minification for production (simple regex-based)
-      const isProduction = process.env.NODE_ENV === 'production';
-      if (isProduction) {
-        // Remove comments and extra whitespace
-        js = js
-          .replace(/\/\/.*$/gm, '') // Remove single-line comments
-          .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
-          .replace(/\s+/g, ' ') // Collapse whitespace
-          .replace(/;\s*}/g, '}') // Remove unnecessary semicolons
-          .trim();
-      }
-
-      await fs.writeFile(outputPath, js);
+    // Basic JS minification for production (simple regex-based)
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      // Remove comments and extra whitespace
+      js = js
+        .replace(/\/\/.*$/gm, '') // Remove single-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+        .replace(/\s+/g, ' ') // Collapse whitespace
+        .replace(/;\s*}/g, '}') // Remove unnecessary semicolons
+        .trim();
     }
+
+    await fs.writeFile(appOutputPath, js);
+  }
+
+  // Copy utils directory
+  if (await fs.pathExists(`${SOURCE_DIR}/utils`)) {
+    await fs.copy(`${SOURCE_DIR}/utils`, `${BUILD_DIR}/utils`);
+  }
+
+  // Copy components directory
+  if (await fs.pathExists(`${SOURCE_DIR}/components`)) {
+    await fs.copy(`${SOURCE_DIR}/components`, `${BUILD_DIR}/components`);
   }
 }
 

@@ -1,5 +1,6 @@
 /**
  * Output Formatters - Format audit results for different output types
+ * Enhanced with beautiful CLI output, progress bars, and ASCII art
  */
 
 const chalk = require('chalk');
@@ -278,9 +279,262 @@ function formatAsHTML(data) {
   return html;
 }
 
+/**
+ * Create success banner with ASCII art
+ */
+function formatSuccessBanner(title, subtitle) {
+  const banner = `
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║   ${chalk.green.bold('✓')} ${chalk.white.bold(title.padEnd(50))}  ║
+║   ${chalk.gray(subtitle.padEnd(54))}║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+  `;
+  return banner;
+}
+
+/**
+ * Create error banner with ASCII art
+ */
+function formatErrorBanner(title, message) {
+  const banner = `
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║   ${chalk.red.bold('✗')} ${chalk.white.bold(title.padEnd(50))}  ║
+║   ${chalk.gray(message.padEnd(54))}║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+  `;
+  return banner;
+}
+
+/**
+ * Create progress bar
+ */
+function formatProgressBar(current, total, width = 40) {
+  const percentage = Math.round((current / total) * 100);
+  const filled = Math.round((current / total) * width);
+  const empty = width - filled;
+  
+  const bar = chalk.green('█'.repeat(filled)) + chalk.gray('░'.repeat(empty));
+  return `[${bar}] ${percentage}% (${current}/${total})`;
+}
+
+/**
+ * Create metrics card for CLI
+ */
+function formatMetricsCard(metrics) {
+  const card = `
+┌─────────────────────────────────────────────────────┐
+│  ${chalk.cyan.bold('📊 Project Metrics')}                            │
+├─────────────────────────────────────────────────────┤
+│  ${chalk.white('Files Analyzed:')} ${chalk.yellow.bold(String(metrics.totalFiles || 0).padStart(8))}            │
+│  ${chalk.white('Issues Found:')}   ${chalk.red.bold(String(metrics.totalIssues || 0).padStart(8))}            │
+│  ${chalk.white('Health Score:')}   ${chalk.green.bold(String(metrics.healthScore || 100).padStart(8) + '%')}       │
+│  ${chalk.white('Analysis Time:')}  ${chalk.gray(formatDuration(metrics.analysisTime || 0).padStart(8))}     │
+└─────────────────────────────────────────────────────┘
+  `;
+  return card;
+}
+
+/**
+ * Format duration in human-readable form
+ */
+function formatDuration(ms) {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${(ms / 60000).toFixed(1)}m`;
+}
+
+/**
+ * Format issue with color coding
+ */
+function formatIssue(issue, index) {
+  const severityColors = {
+    high: chalk.red,
+    medium: chalk.yellow,
+    low: chalk.blue
+  };
+  
+  const severityIcons = {
+    high: '🔴',
+    medium: '🟡',
+    low: '🔵'
+  };
+  
+  const color = severityColors[issue.severity] || chalk.gray;
+  const icon = severityIcons[issue.severity] || '⚪';
+  
+  let output = `\n${icon} ${color.bold(`Issue #${index + 1}`)}\n`;
+  output += `   ${chalk.white('Type:')} ${issue.type || 'General'}\n`;
+  output += `   ${chalk.white('Severity:')} ${color(issue.severity || 'Unknown')}\n`;
+  output += `   ${chalk.white('Message:')} ${issue.message}\n`;
+  
+  if (issue.file) {
+    output += `   ${chalk.white('File:')} ${chalk.cyan(issue.file)}\n`;
+  }
+  
+  if (issue.suggestion) {
+    output += `   ${chalk.white('Suggestion:')} ${chalk.green(issue.suggestion)}\n`;
+  }
+  
+  return output;
+}
+
+/**
+ * Create summary card
+ */
+function formatSummaryCard(data) {
+  const healthScore = calculateHealthScore(data);
+  const healthEmoji = getHealthEmoji(healthScore);
+  const healthText = getHealthText(healthScore);
+  
+  const card = `
+╔═══════════════════════════════════════════════════════════╗
+║  ${chalk.white.bold('AUDIT SUMMARY')}                                       ║
+╠═══════════════════════════════════════════════════════════╣
+║                                                           ║
+║  ${healthEmoji}  Health Score: ${getHealthColor(healthScore)(healthScore + '%')} ${chalk.gray(`(${healthText})`)}       ║
+║                                                           ║
+║  ${chalk.cyan('📁')}  Files:   ${chalk.white(String(data.metadata?.totalFilesAnalyzed || 0).padStart(6))}                          ║
+║  ${chalk.red('⚠️ ')}  Issues:  ${chalk.white(String(data.issues?.length || 0).padStart(6))}                          ║
+║  ${chalk.green('✅')}  Fixed:   ${chalk.white(String(data.completed || 0).padStart(6))}                          ║
+║  ${chalk.yellow('💡')}  Suggestions: ${chalk.white(String(data.recommendations?.length || 0).padStart(2))}                       ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+  `;
+  return card;
+}
+
+/**
+ * Calculate health score
+ */
+function calculateHealthScore(data) {
+  const issues = data.issues?.length || 0;
+  const files = data.metadata?.totalFilesAnalyzed || 1;
+  return Math.max(0, 100 - Math.min(100, (issues / files) * 50));
+}
+
+/**
+ * Get health emoji
+ */
+function getHealthEmoji(score) {
+  if (score >= 90) return '🎉';
+  if (score >= 75) return '😊';
+  if (score >= 60) return '😐';
+  return '😰';
+}
+
+/**
+ * Get health text
+ */
+function getHealthText(score) {
+  if (score >= 90) return 'Excellent';
+  if (score >= 75) return 'Good';
+  if (score >= 60) return 'Fair';
+  return 'Needs Improvement';
+}
+
+/**
+ * Get health color function
+ */
+function getHealthColor(score) {
+  if (score >= 90) return chalk.green.bold;
+  if (score >= 75) return chalk.blue.bold;
+  if (score >= 60) return chalk.yellow.bold;
+  return chalk.red.bold;
+}
+
+/**
+ * Format issue list with collapsible sections
+ */
+function formatIssuesList(issues, showAll = false) {
+  if (!issues || issues.length === 0) {
+    return chalk.green('\n✓ No issues found! Your code looks great!\n');
+  }
+  
+  let output = chalk.yellow.bold('\n⚠️  Issues Found:\n');
+  
+  // Group by severity
+  const grouped = {
+    high: issues.filter(i => i.severity === 'high'),
+    medium: issues.filter(i => i.severity === 'medium'),
+    low: issues.filter(i => i.severity === 'low')
+  };
+  
+  // Show high priority issues
+  if (grouped.high.length > 0) {
+    output += chalk.red.bold(`\n🔴 High Priority (${grouped.high.length})\n`);
+    const displayCount = showAll ? grouped.high.length : Math.min(3, grouped.high.length);
+    for (let i = 0; i < displayCount; i++) {
+      output += formatIssue(grouped.high[i], i);
+    }
+    if (!showAll && grouped.high.length > 3) {
+      output += chalk.gray(`\n   ... and ${grouped.high.length - 3} more\n`);
+    }
+  }
+  
+  // Show medium priority issues
+  if (grouped.medium.length > 0) {
+    output += chalk.yellow.bold(`\n🟡 Medium Priority (${grouped.medium.length})\n`);
+    const displayCount = showAll ? grouped.medium.length : Math.min(2, grouped.medium.length);
+    for (let i = 0; i < displayCount; i++) {
+      output += formatIssue(grouped.medium[i], i);
+    }
+    if (!showAll && grouped.medium.length > 2) {
+      output += chalk.gray(`\n   ... and ${grouped.medium.length - 2} more\n`);
+    }
+  }
+  
+  // Show low priority issues summary
+  if (grouped.low.length > 0) {
+    output += chalk.blue.bold(`\n🔵 Low Priority (${grouped.low.length})\n`);
+    if (showAll) {
+      for (let i = 0; i < grouped.low.length; i++) {
+        output += formatIssue(grouped.low[i], i);
+      }
+    } else {
+      output += chalk.gray(`   ${grouped.low.length} minor issues (use --all to show)\n`);
+    }
+  }
+  
+  return output;
+}
+
+/**
+ * Format recommendations as actionable list
+ */
+function formatRecommendations(recommendations) {
+  if (!recommendations || recommendations.length === 0) {
+    return '';
+  }
+  
+  let output = chalk.cyan.bold('\n💡 Recommendations:\n');
+  
+  recommendations.forEach((rec, index) => {
+    const priorityIcon = rec.priority === 'high' ? '🔥' : rec.priority === 'medium' ? '⭐' : '💭';
+    output += `\n${priorityIcon} ${chalk.white.bold(rec.title)}\n`;
+    if (rec.description) {
+      output += `   ${chalk.gray(rec.description)}\n`;
+    }
+  });
+  
+  return output;
+}
+
 module.exports = {
   formatOutput,
   formatAsTable,
   formatAsMarkdown,
-  formatAsHTML
+  formatAsHTML,
+  formatSuccessBanner,
+  formatErrorBanner,
+  formatProgressBar,
+  formatMetricsCard,
+  formatSummaryCard,
+  formatIssue,
+  formatIssuesList,
+  formatRecommendations,
+  formatDuration
 };

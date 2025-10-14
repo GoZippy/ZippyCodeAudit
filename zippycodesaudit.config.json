@@ -1,0 +1,26 @@
+{
+  "project": {
+    "name": "ZippyCodeAudit Demo",
+    "type": "auto-detect"
+  },
+  "automation": {
+    "schedule": "0 14 * * 1",
+    "enabled": false
+  },
+  "analysis": {
+    "excludePatterns": [
+      "node_modules/**",
+      "dist/**",
+      "build/**",
+      ".git/**"
+    ],
+    "maxDepth": 10,
+    "includePatterns": [
+      "**/*.{js,ts,py,go,md,json,yml,yaml}"
+    ]
+  },
+  "reporting": {
+    "format": "markdown",
+    "outputDir": "docs/audit_reports"
+  }
+}

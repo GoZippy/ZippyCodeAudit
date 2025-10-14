@@ -7,6 +7,7 @@ const path = require('path');
 const chalk = require('chalk');
 const ora = require('ora');
 const AuditEngine = require('../../core/AuditEngine');
+const ReportGenerator = require('../../core/ReportGenerator');
 
 async function reportCommand(options) {
   const spinner = ora();
@@ -48,24 +49,28 @@ async function reportCommand(options) {
 }
 
 async function generateReport(results, options) {
-  const timestamp = new Date().toISOString();
-  const type = options.type || 'summary';
+  const reportGenerator = new ReportGenerator();
 
-  const report = {
-    metadata: {
-      generatedAt: timestamp,
-      type: type,
-      projectPath: results.metadata.projectPath,
-      totalFiles: results.metadata.totalFilesAnalyzed,
-      totalIssues: results.metadata.totalIssues,
-      repository: results.metadata.repositoryInfo ? true : false
-    },
-    summary: generateSummary(results),
-    details: generateDetails(results, type),
-    recommendations: results.recommendations || []
+  // Get project info
+  const projectInfo = {
+    name: path.basename(results.metadata?.projectPath || process.cwd()),
+    type: results.metadata?.projectType || 'unknown',
+    path: results.metadata?.projectPath || process.cwd()
   };
 
-  return report;
+  // Generate the report using ReportGenerator
+  const content = await reportGenerator.generateReport(results, {
+    format: options.format,
+    includeAI: options.ai,
+    projectInfo: projectInfo
+  });
+
+  return {
+    content: content,
+    format: options.format,
+    generatedAt: new Date().toISOString(),
+    project: projectInfo
+  };
 }
 
 function generateSummary(results) {
@@ -206,61 +211,21 @@ async function displayReport(report, format) {
     return;
   }
 
-  console.log(chalk.cyan.bold('📋 AUDIT REPORT\n'));
-
-  // Header
-  console.log(chalk.yellow('Generated:'), new Date(report.metadata.generatedAt).toLocaleString());
-  console.log(chalk.yellow('Type:'), report.metadata.type);
-  console.log(chalk.yellow('Project Health:'), report.summary.projectHealth);
-  console.log('');
-
-  // Tech Stack
-  console.log(chalk.cyan('🛠️  Tech Stack:'));
-  report.summary.techStack.forEach(tech => {
-    console.log(`   • ${tech}`);
-  });
-  console.log('');
-
-  // Metrics
-  console.log(chalk.cyan('📊 Metrics:'));
-  console.log(`   Files: ${report.metadata.totalFiles}`);
-  console.log(`   Lines: ${report.summary.metrics.totalLines.toLocaleString()}`);
-  console.log(`   Size: ${report.summary.metrics.totalSizeKB}KB`);
-  console.log('');
-
-  // Issues
-  if (report.details.keyIssues && report.details.keyIssues.length > 0) {
-    console.log(chalk.cyan('⚠️  Key Issues:'));
-    report.details.keyIssues.forEach((issue, index) => {
-      console.log(`   ${index + 1}. [${issue.severity.toUpperCase()}] ${issue.message}`);
-    });
-    console.log('');
-  }
-
-  // Recommendations
-  if (report.recommendations && report.recommendations.length > 0) {
-    console.log(chalk.cyan('💡 Recommendations:'));
-    report.recommendations.forEach((rec, index) => {
-      console.log(`   ${index + 1}. ${rec.title}`);
-      if (rec.description) {
-        console.log(`      ${chalk.gray(rec.description)}`);
-      }
-    });
-  }
+  // Display the markdown content directly
+  console.log(report.content);
 }
 
 async function saveReport(report, outputPath, format) {
   const spinner = ora('Saving report...').start();
 
   try {
+    // The new report format has content directly in the report object
+    const content = report.content;
+
     if (format === 'json') {
       await fs.writeJson(outputPath, report, { spaces: 2 });
-    } else if (format === 'html') {
-      const html = generateHTMLReport(report);
-      await fs.writeFile(outputPath, html, 'utf8');
     } else {
-      const markdown = generateMarkdownReport(report);
-      await fs.writeFile(outputPath, markdown, 'utf8');
+      await fs.writeFile(outputPath, content, 'utf8');
     }
 
     spinner.succeed(chalk.green(`Report saved to: ${outputPath}`));

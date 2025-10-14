@@ -13,7 +13,6 @@ $Red = "Red"
 $Green = "Green"
 $Yellow = "Yellow"
 $Blue = "Blue"
-$NC = "White"
 
 # Project information
 $ProjectName = "ZippyCodeAudit"
@@ -139,7 +138,7 @@ if (-not (Test-Path $configPath) -or $Force) {
     try {
         # Try Node.js version first
         if (Get-Command node -ErrorAction SilentlyContinue) {
-            $portScanResult = node scripts/port-scanner.js 2>$null
+            node scripts/port-scanner.js 2>$null
             if ($LASTEXITCODE -eq 0 -and (Test-Path $configPath)) {
                 Write-Host "✅ Port configuration generated using Node.js" -ForegroundColor $Green
             } else {

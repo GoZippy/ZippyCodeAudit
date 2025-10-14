@@ -7,7 +7,13 @@ const path = require('path');
 const chalk = require('chalk');
 const ora = require('ora');
 const AuditEngine = require('../../core/AuditEngine');
-const { formatOutput } = require('../utils/formatters');
+const { 
+  formatOutput, 
+  formatSuccessBanner,
+  formatSummaryCard,
+  formatIssuesList,
+  formatRecommendations
+} = require('../utils/formatters');
 
 async function analyzeCommand(options) {
   const spinner = ora();
@@ -35,7 +41,8 @@ async function analyzeCommand(options) {
       await saveResults(results, options.output, options.format);
     }
 
-    console.log(chalk.green.bold('\n✅ Audit completed successfully!'));
+    // Show success banner
+    console.log(formatSuccessBanner('Audit Completed Successfully', 'Your code has been analyzed'));
 
   } catch (error) {
     spinner.fail(chalk.red('❌ Audit failed'));
@@ -52,14 +59,8 @@ async function analyzeCommand(options) {
 async function displayResults(results, options) {
   const format = options.format || 'markdown';
 
-  console.log(chalk.cyan.bold('\n📊 AUDIT RESULTS\n'));
-
-  // Project metadata
-  console.log(chalk.yellow('📋 Project Information:'));
-  console.log(`   Repository: ${results.metadata.repositoryInfo ? 'Yes' : 'No'}`);
-  console.log(`   Total Files: ${results.metadata.totalFilesAnalyzed || 0}`);
-  console.log(`   Issues Found: ${results.metadata.totalIssues || 0}`);
-  console.log(`   Recommendations: ${results.recommendations?.length || 0}`);
+  // Show summary card
+  console.log(formatSummaryCard(results));
 
   // Tech stack summary
   if (results.metadata.packageInfo) {
@@ -71,32 +72,16 @@ async function displayResults(results, options) {
     });
   }
 
-  // Issues summary
+  // Issues list with enhanced formatting
   if (results.issues && results.issues.length > 0) {
-    console.log(chalk.yellow('\n⚠️  Issues Summary:'));
-
-    const severityCounts = {};
-    results.issues.forEach(issue => {
-      severityCounts[issue.severity] = (severityCounts[issue.severity] || 0) + 1;
-    });
-
-    Object.entries(severityCounts).forEach(([severity, count]) => {
-      const color = severity === 'high' ? 'red' : severity === 'medium' ? 'yellow' : 'blue';
-      console.log(`   ${chalk[color](count)} ${severity} priority issues`);
-    });
+    console.log(formatIssuesList(results.issues, options.all));
+  } else {
+    console.log(chalk.green('\n✓ No issues found! Your code looks great!\n'));
   }
 
   // Recommendations
   if (results.recommendations && results.recommendations.length > 0) {
-    console.log(chalk.yellow('\n💡 Top Recommendations:'));
-
-    results.recommendations.slice(0, 3).forEach((rec, index) => {
-      const priority = rec.priority === 'high' ? '🔴' : rec.priority === 'medium' ? '🟡' : '🔵';
-      console.log(`   ${priority} ${rec.title}`);
-      if (rec.description) {
-        console.log(`      ${chalk.gray(rec.description)}`);
-      }
-    });
+    console.log(formatRecommendations(results.recommendations));
   }
 
   // Detailed output if requested
