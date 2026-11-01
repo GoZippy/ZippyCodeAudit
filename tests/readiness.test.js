@@ -12,6 +12,14 @@ describe('ReadinessEngine', () => {
     expect(compareVersions('1.2.3', '1.3.0')).toBe(-1);
   });
 
+  test('present false values are still evidence for exists checks', () => {
+    const result = evaluateRule(
+      { id: 'exists', title: 'Exists', checks: [{ path: 'feature.enabled', op: 'exists' }] },
+      { feature: { enabled: false } }
+    );
+    expect(result.status).toBe(STATUSES.PASS);
+  });
+
   test('returns NOT_APPLICABLE when applicability evidence excludes the rule', () => {
     const result = evaluateRule(
       {
