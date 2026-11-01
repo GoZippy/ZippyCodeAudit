@@ -16,6 +16,7 @@ const checkCommand = require('./commands/check');
 const reportCommand = require('./commands/report');
 const initCommand = require('./commands/init');
 const configCommand = require('./commands/config');
+const readinessCommand = require('./commands/readiness');
 
 const program = new Command();
 
@@ -76,6 +77,17 @@ program
   .option('-f, --format <format>', 'Output format (json, table, summary)', 'table')
   .option('-o, --output <file>', 'Output file path')
   .action(checkCommand);
+
+
+// Readiness command
+program
+  .command('readiness')
+  .description('Run evidence-oriented security/readiness rules against an authorized inventory')
+  .requiredOption('--inventory <file>', 'Authorized inventory JSON file')
+  .requiredOption('--rules <file>', 'Readiness rules JSON file')
+  .option('-f, --format <format>', 'Output format (json, markdown)', 'json')
+  .option('-o, --output <file>', 'Output file path')
+  .action(readinessCommand);
 
 // Report command
 program
