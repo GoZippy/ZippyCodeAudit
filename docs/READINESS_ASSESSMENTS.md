@@ -27,7 +27,32 @@ zippy-audit readiness \
 ```
 
 The inventory file contains authorized, read-only evidence gathered for the
-customer environment. The rules file contains one or more declarative rules.
+customer environment.
+
+The rules file should normally be a **named, versioned rule pack**:
+
+```json
+{
+  "name": "ZTI security readiness starter pack",
+  "version": "2026-11-01",
+  "rules": []
+}
+```
+
+Legacy raw rule arrays remain accepted for compatibility, but customer-facing
+packs should carry stable `name` and `version` metadata.
+
+Before any assessment runs, rule packs are validated. The CLI fails closed on:
+
+- missing pack name/version metadata;
+- missing or empty rule arrays;
+- duplicate rule IDs;
+- unsupported condition operators;
+- malformed applicability/check arrays;
+- missing condition paths;
+- invalid `in` values.
+
+This keeps malformed rule content from silently becoming customer evidence.
 
 ## Rule shape
 
@@ -47,8 +72,23 @@ customer environment. The rules file contains one or more declarative rules.
 }
 ```
 
-Supported operators in the first slice are `exists`, `equals`, `notEquals`,
-`in`, `contains`, `semverGte`, and `semverLt`.
+Supported operators are `exists`, `equals`, `notEquals`, `in`,
+`contains`, `semverGte`, and `semverLt`.
+
+## Rule-pack provenance
+
+Customer-facing packs should be treated as versioned security content:
+
+1. keep rule IDs stable across revisions;
+2. update the pack version whenever applicability/remediation semantics change;
+3. retain primary evidence/source identifiers with each rule;
+4. reject duplicate rule IDs;
+5. preserve old pack versions when a prior assessment must be reproduced;
+6. do not reinterpret a historical report using newer rules without explicitly
+   running a new assessment.
+
+The generated JSON/Markdown report includes the rule-pack name and version so
+the assessment can be traced to the exact evaluation content used.
 
 ## Safety boundary
 
