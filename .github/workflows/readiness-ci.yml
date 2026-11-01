@@ -1,0 +1,41 @@
+name: Readiness CI
+
+on:
+  pull_request:
+    paths:
+      - 'src/readiness/**'
+      - 'src/cli/commands/readiness.js'
+      - 'src/cli/index.js'
+      - 'rules/**'
+      - 'tests/readiness.test.js'
+      - '.github/workflows/readiness-ci.yml'
+  push:
+    branches:
+      - 'feat/a020-readiness-engine'
+    paths:
+      - 'src/readiness/**'
+      - 'src/cli/commands/readiness.js'
+      - 'src/cli/index.js'
+      - 'rules/**'
+      - 'tests/readiness.test.js'
+      - '.github/workflows/readiness-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Run readiness tests
+        run: npx jest tests/readiness.test.js --runInBand
+      - name: CLI smoke test
+        run: node src/cli/index.js readiness --help
