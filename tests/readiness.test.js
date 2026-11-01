@@ -70,3 +70,47 @@ describe('ReadinessEngine', () => {
     expect(assessment.summary.UNKNOWN).toBe(1);
   });
 });
+
+
+describe('starter rule pack', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const pack = JSON.parse(
+    fs.readFileSync(path.join(__dirname, '..', 'rules', 'zti-security-2026-11-01.json'), 'utf8')
+  );
+
+  test('flags affected Strands release and passes fixed release', () => {
+    const affected = runReadinessAssessment({
+      inventory: { packages: { 'strands-agents-tools': { version: '0.8.5' } } },
+      rules: [pack.rules[0]]
+    });
+    const fixed = runReadinessAssessment({
+      inventory: { packages: { 'strands-agents-tools': { version: '0.8.6' } } },
+      rules: [pack.rules[0]]
+    });
+
+    expect(affected.results[0].status).toBe(STATUSES.FAIL);
+    expect(fixed.results[0].status).toBe(STATUSES.PASS);
+  });
+
+  test('requires AgentCore artifact regeneration evidence in addition to package fix', () => {
+    const assessment = runReadinessAssessment({
+      inventory: {
+        packages: { 'bedrock-agentcore-starter-toolkit': { version: '0.3.14' } },
+        artifacts: { agentcore: { reimportedWithFixedTooling: true } }
+      },
+      rules: [pack.rules[1]]
+    });
+
+    expect(assessment.results[0].status).toBe(STATUSES.PARTIAL);
+  });
+
+  test('flags the compromised LiteLLM release exactly', () => {
+    const assessment = runReadinessAssessment({
+      inventory: { packages: { litellm: { version: '1.107.0' } } },
+      rules: [pack.rules[2]]
+    });
+
+    expect(assessment.results[0].status).toBe(STATUSES.FAIL);
+  });
+});
