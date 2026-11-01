@@ -2,7 +2,8 @@ const {
   STATUSES,
   compareVersions,
   evaluateRule,
-  runReadinessAssessment
+  runReadinessAssessment,
+  validateRulePack
 } = require('../src/readiness/ReadinessEngine');
 
 describe('ReadinessEngine', () => {
@@ -79,13 +80,93 @@ describe('ReadinessEngine', () => {
   });
 });
 
+describe('rule-pack validation', () => {
+  test('accepts a named, versioned rule pack', () => {
+    const pack = validateRulePack({
+      name: 'example pack',
+      version: '2026-11-01',
+      rules: [
+        {
+          id: 'example.rule',
+          title: 'Example',
+          checks: [{ path: 'product.version', op: 'semverGte', value: '1.0.0' }]
+        }
+      ]
+    });
+
+    expect(pack.name).toBe('example pack');
+    expect(pack.version).toBe('2026-11-01');
+    expect(pack.rules).toHaveLength(1);
+  });
+
+  test('rejects duplicate rule ids', () => {
+    expect(() =>
+      validateRulePack({
+        name: 'duplicate pack',
+        version: '1',
+        rules: [
+          { id: 'same', title: 'One', checks: [] },
+          { id: 'same', title: 'Two', checks: [] }
+        ]
+      })
+    ).toThrow('Duplicate readiness rule id: same');
+  });
+
+  test('rejects unsupported operators before assessment', () => {
+    expect(() =>
+      validateRulePack({
+        name: 'bad operator',
+        version: '1',
+        rules: [
+          {
+            id: 'bad',
+            title: 'Bad',
+            checks: [{ path: 'x', op: 'shellExec', value: 'true' }]
+          }
+        ]
+      })
+    ).toThrow('unsupported operator');
+  });
+
+  test('rejects malformed rule-pack metadata', () => {
+    expect(() =>
+      validateRulePack({
+        name: '',
+        version: '1',
+        rules: [{ id: 'x', title: 'X', checks: [] }]
+      })
+    ).toThrow('non-empty name');
+  });
+
+  test('rejects malformed condition values', () => {
+    expect(() =>
+      validateRulePack({
+        name: 'bad in',
+        version: '1',
+        rules: [
+          {
+            id: 'bad-in',
+            title: 'Bad in',
+            checks: [{ path: 'x', op: 'in', value: 'not-an-array' }]
+          }
+        ]
+      })
+    ).toThrow('array value');
+  });
+});
 
 describe('starter rule pack', () => {
   const fs = require('fs');
   const path = require('path');
-  const pack = JSON.parse(
+  const packDocument = JSON.parse(
     fs.readFileSync(path.join(__dirname, '..', 'rules', 'zti-security-2026-11-01.json'), 'utf8')
   );
+  const pack = validateRulePack(packDocument);
+
+  test('starter pack has stable metadata', () => {
+    expect(pack.name).toBe('ZTI security readiness starter pack');
+    expect(pack.version).toBe('2026-11-01');
+  });
 
   test('flags affected Strands release and passes fixed release', () => {
     const affected = runReadinessAssessment({
