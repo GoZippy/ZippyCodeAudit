@@ -53,7 +53,7 @@ function evaluateCondition(condition, inventory) {
 
   switch (condition.op) {
     case 'exists':
-      return { known: true, pass: Boolean(actual), actual };
+      return { known: true, pass: true, actual };
     case 'equals':
       return { known: true, pass: actual === condition.value, actual };
     case 'notEquals':
