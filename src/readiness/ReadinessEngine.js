@@ -14,6 +14,16 @@ const STATUSES = Object.freeze({
   NOT_APPLICABLE: 'NOT_APPLICABLE'
 });
 
+const SUPPORTED_OPERATORS = Object.freeze([
+  'exists',
+  'equals',
+  'notEquals',
+  'in',
+  'contains',
+  'semverGte',
+  'semverLt'
+]);
+
 function getPath(obj, dottedPath) {
   if (!dottedPath) return obj;
   return dottedPath.split('.').reduce((value, key) => {
@@ -42,6 +52,115 @@ function compareVersions(left, right) {
     if (av < bv) return -1;
   }
   return 0;
+}
+
+function assertPlainObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`${label} must be an object`);
+  }
+}
+
+function validateCondition(condition, label) {
+  assertPlainObject(condition, label);
+
+  if (typeof condition.path !== 'string' || condition.path.trim() === '') {
+    throw new Error(`${label} requires a non-empty path`);
+  }
+
+  if (!SUPPORTED_OPERATORS.includes(condition.op)) {
+    throw new Error(
+      `${label} uses unsupported operator: ${String(condition.op)}`
+    );
+  }
+
+  if (condition.op !== 'exists' && !Object.prototype.hasOwnProperty.call(condition, 'value')) {
+    throw new Error(`${label} requires value for operator ${condition.op}`);
+  }
+
+  if (condition.op === 'in' && !Array.isArray(condition.value)) {
+    throw new Error(`${label} requires an array value for operator in`);
+  }
+
+  return condition;
+}
+
+function validateRule(rule, index = 0) {
+  assertPlainObject(rule, `Rule at index ${index}`);
+
+  if (typeof rule.id !== 'string' || rule.id.trim() === '') {
+    throw new Error(`Rule at index ${index} requires a non-empty id`);
+  }
+  if (typeof rule.title !== 'string' || rule.title.trim() === '') {
+    throw new Error(`Rule ${rule.id} requires a non-empty title`);
+  }
+
+  for (const field of ['applicability', 'checks']) {
+    if (rule[field] !== undefined && !Array.isArray(rule[field])) {
+      throw new Error(`Rule ${rule.id} field ${field} must be an array`);
+    }
+
+    (rule[field] || []).forEach((condition, conditionIndex) => {
+      validateCondition(
+        condition,
+        `Rule ${rule.id} ${field}[${conditionIndex}]`
+      );
+    });
+  }
+
+  if (rule.evidence !== undefined && !Array.isArray(rule.evidence)) {
+    throw new Error(`Rule ${rule.id} field evidence must be an array`);
+  }
+
+  return rule;
+}
+
+function validateRulePack(document) {
+  let rules;
+  let metadata;
+
+  if (Array.isArray(document)) {
+    rules = document;
+    metadata = {
+      name: 'legacy-rule-array',
+      version: null
+    };
+  } else {
+    assertPlainObject(document, 'Rule pack');
+
+    if (typeof document.name !== 'string' || document.name.trim() === '') {
+      throw new Error('Rule pack requires a non-empty name');
+    }
+    if (typeof document.version !== 'string' || document.version.trim() === '') {
+      throw new Error('Rule pack requires a non-empty version');
+    }
+    if (!Array.isArray(document.rules)) {
+      throw new Error('Rule pack requires a rules array');
+    }
+
+    rules = document.rules;
+    metadata = {
+      name: document.name,
+      version: document.version
+    };
+  }
+
+  if (rules.length === 0) {
+    throw new Error('Rule pack must contain at least one rule');
+  }
+
+  const seen = new Set();
+  rules.forEach((rule, index) => {
+    validateRule(rule, index);
+    if (seen.has(rule.id)) {
+      throw new Error(`Duplicate readiness rule id: ${rule.id}`);
+    }
+    seen.add(rule.id);
+  });
+
+  return {
+    ...metadata,
+    rules
+  };
 }
 
 function evaluateCondition(condition, inventory) {
@@ -94,12 +213,7 @@ function evaluateCondition(condition, inventory) {
 }
 
 function normalizeRule(rule) {
-  if (!rule || typeof rule !== 'object') {
-    throw new Error('Readiness rule must be an object');
-  }
-  if (!rule.id || !rule.title) {
-    throw new Error('Readiness rule requires id and title');
-  }
+  validateRule(rule);
   return {
     severity: 'medium',
     applicability: [],
@@ -170,13 +284,15 @@ function evaluateRule(rawRule, inventory) {
   };
 }
 
-function runReadinessAssessment({ inventory, rules }) {
+function runReadinessAssessment({ inventory, rules, rulePack = null }) {
   if (!inventory || typeof inventory !== 'object') {
     throw new Error('Inventory must be an object');
   }
   if (!Array.isArray(rules)) {
     throw new Error('Rules must be an array');
   }
+
+  rules.forEach((rule, index) => validateRule(rule, index));
 
   const results = rules.map(rule => evaluateRule(rule, inventory));
   const counts = Object.values(STATUSES).reduce((acc, status) => {
@@ -186,6 +302,7 @@ function runReadinessAssessment({ inventory, rules }) {
 
   return {
     generatedAt: new Date().toISOString(),
+    rulePack,
     summary: {
       totalRules: results.length,
       ...counts
@@ -196,8 +313,12 @@ function runReadinessAssessment({ inventory, rules }) {
 
 module.exports = {
   STATUSES,
+  SUPPORTED_OPERATORS,
   getPath,
   compareVersions,
+  validateCondition,
+  validateRule,
+  validateRulePack,
   evaluateCondition,
   evaluateRule,
   runReadinessAssessment
