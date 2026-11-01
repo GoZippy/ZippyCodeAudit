@@ -1,0 +1,59 @@
+{
+  "name": "ZTI security readiness starter pack",
+  "version": "2026-11-01",
+  "rules": [
+    {
+      "id": "aws.strands-agents-tools.CVE-2026-115415",
+      "title": "Strands Agents Tools environment masking fixed release",
+      "severity": "critical",
+      "applicability": [
+        { "path": "packages.strands-agents-tools.version", "op": "exists" },
+        { "path": "packages.strands-agents-tools.version", "op": "semverGte", "value": "0.1.0" }
+      ],
+      "checks": [
+        { "path": "packages.strands-agents-tools.version", "op": "semverGte", "value": "0.8.6" }
+      ],
+      "remediation": "Upgrade strands-agents-tools to 0.8.6 or later; review whether the environment tool was loaded and rotate credentials that may have been exposed.",
+      "evidence": [
+        "AWS-2026-154",
+        "https://aws.amazon.com/security/security-bulletins/2026-154-aws/"
+      ]
+    },
+    {
+      "id": "aws.agentcore-starter-toolkit.CVE-2026-105812-106032",
+      "title": "Bedrock AgentCore Starter Toolkit fixed release and artifact regeneration",
+      "severity": "critical",
+      "applicability": [
+        { "path": "packages.bedrock-agentcore-starter-toolkit.version", "op": "exists" },
+        { "path": "packages.bedrock-agentcore-starter-toolkit.version", "op": "semverGte", "value": "0.1.4" }
+      ],
+      "checks": [
+        { "path": "packages.bedrock-agentcore-starter-toolkit.version", "op": "semverGte", "value": "0.3.14" },
+        { "path": "artifacts.agentcore.reimportedWithFixedTooling", "op": "equals", "value": true },
+        { "path": "artifacts.agentcore.deployedArtifactsReplaced", "op": "equals", "value": true }
+      ],
+      "remediation": "Upgrade to 0.3.14 or later, re-import affected agents, and replace local/deployed artifacts; prefer migration to the replacement AgentCore CLI.",
+      "evidence": [
+        "AWS-2026-127",
+        "https://aws.amazon.com/security/security-bulletins/2026-127-aws/"
+      ]
+    },
+    {
+      "id": "litellm.supply-chain.1.107.0",
+      "title": "LiteLLM compromised 1.107.0 artifact is absent",
+      "severity": "critical",
+      "applicability": [
+        { "path": "packages.litellm.version", "op": "exists" }
+      ],
+      "checks": [
+        { "path": "packages.litellm.version", "op": "notEquals", "value": "1.107.0" }
+      ],
+      "remediation": "If 1.107.0 or a compromised container digest was present, preserve evidence using known-clean external tooling, rebuild from trusted artifacts, and review/rotate credentials accessible to the affected identity.",
+      "evidence": [
+        "Microsoft-LiteLLM-2026-10-23",
+        "https://www.microsoft.com/en-us/security/blog/2026/10/23/inside-the-litellm-1-107-0-supply-chain-compromise-credential-theft-through-python-startup-hooks/",
+        "https://docs.litellm.ai/blog/security-incident-oct-21-2026-attack-chain"
+      ]
+    }
+  ]
+}
