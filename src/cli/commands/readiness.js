@@ -7,7 +7,10 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { runReadinessAssessment } = require('../../readiness/ReadinessEngine');
+const {
+  runReadinessAssessment,
+  validateRulePack
+} = require('../../readiness/ReadinessEngine');
 
 async function readinessCommand(options) {
   const inventoryPath = path.resolve(options.inventory);
@@ -18,8 +21,15 @@ async function readinessCommand(options) {
     fs.readJson(rulesPath)
   ]);
 
-  const rules = Array.isArray(rulesDocument) ? rulesDocument : rulesDocument.rules;
-  const assessment = runReadinessAssessment({ inventory, rules });
+  const rulePack = validateRulePack(rulesDocument);
+  const assessment = runReadinessAssessment({
+    inventory,
+    rules: rulePack.rules,
+    rulePack: {
+      name: rulePack.name,
+      version: rulePack.version
+    }
+  });
 
   const format = options.format || 'json';
   let output;
@@ -52,7 +62,19 @@ function formatMarkdown(assessment) {
     '# ZippyCodeAudit Readiness Assessment',
     '',
     `Generated: ${assessment.generatedAt}`,
-    '',
+    ''
+  ];
+
+  if (assessment.rulePack) {
+    lines.push(
+      `Rule pack: ${assessment.rulePack.name}${
+        assessment.rulePack.version ? ` (${assessment.rulePack.version})` : ''
+      }`,
+      ''
+    );
+  }
+
+  lines.push(
     '## Summary',
     '',
     `- PASS: ${assessment.summary.PASS || 0}`,
@@ -63,7 +85,7 @@ function formatMarkdown(assessment) {
     '',
     '## Results',
     ''
-  ];
+  );
 
   for (const result of assessment.results) {
     lines.push(`### [${result.status}] ${result.title}`);
